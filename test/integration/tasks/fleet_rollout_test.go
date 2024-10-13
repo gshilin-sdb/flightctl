@@ -328,7 +328,7 @@ var _ = Describe("FleetRollout", func() {
 				}
 				raceCalled = true
 				otherupdate := api.Device{
-					Metadata: api.ObjectMeta{
+					Metadata: api.DeviceMetadata{
 						Name:            util.StrToPtr("mydevice-1"),
 						Owner:           util.SetResourceOwner(model.FleetKind, "some-other-owner"),
 						ResourceVersion: util.StrToPtr("0"),
@@ -374,7 +374,7 @@ var _ = Describe("FleetRollout", func() {
 				}
 				raceCalled = true
 				otherupdate := api.Device{
-					Metadata: api.ObjectMeta{
+					Metadata: api.DeviceMetadata{
 						Name:            util.StrToPtr("mydevice-1"),
 						ResourceVersion: util.StrToPtr("0"),
 					},
