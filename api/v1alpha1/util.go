@@ -12,8 +12,13 @@ import (
 type HookActionType string
 
 const (
-	SystemdActionType    HookActionType = "systemd"
-	ExecutableActionType HookActionType = "executable"
+	RunActionType HookActionType = "run"
+)
+
+type HookConditionType string
+
+const (
+	FileOpConditionType HookConditionType = "path"
 )
 
 type ConfigProviderType string
@@ -33,20 +38,30 @@ const (
 
 // Type returns the type of the action.
 func (t HookAction) Type() (HookActionType, error) {
-	var data map[HookActionType]struct{}
+	var data map[HookActionType]interface{}
 	if err := json.Unmarshal(t.union, &data); err != nil {
 		return "", err
 	}
 
-	if _, exists := data[ExecutableActionType]; exists {
-		return ExecutableActionType, nil
+	if _, exists := data[RunActionType]; exists {
+		return RunActionType, nil
 	}
 
-	if _, exists := data[SystemdActionType]; exists {
-		return SystemdActionType, nil
+	return "", fmt.Errorf("unable to determine hook action type: %+v", data)
+}
+
+// Type returns the type of the condition.
+func (t HookAction_If) Type() (HookConditionType, error) {
+	var data map[string]interface{}
+	if err := json.Unmarshal(t.union, &data); err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("unable to determine action type: %+v", data)
+	if _, exists := data[string(FileOpConditionType)]; exists {
+		return FileOpConditionType, nil
+	}
+
+	return "", fmt.Errorf("unable to determine hook condition type: %+v", data)
 }
 
 // Type returns the type of the config provider.

@@ -93,7 +93,6 @@ const (
 // Defines values for FileOperation.
 const (
 	FileOperationCreate FileOperation = "Create"
-	FileOperationReboot FileOperation = "Reboot"
 	FileOperationRemove FileOperation = "Remove"
 	FileOperationUpdate FileOperation = "Update"
 )
@@ -102,17 +101,6 @@ const (
 const (
 	Base64 FileSpecContentEncoding = "base64"
 	Plain  FileSpecContentEncoding = "plain"
-)
-
-// Defines values for HookActionSystemdUnitOperations.
-const (
-	SystemdDaemonReload HookActionSystemdUnitOperations = "DaemonReload"
-	SystemdDisable      HookActionSystemdUnitOperations = "Disable"
-	SystemdEnable       HookActionSystemdUnitOperations = "Enable"
-	SystemdReload       HookActionSystemdUnitOperations = "Reload"
-	SystemdRestart      HookActionSystemdUnitOperations = "Restart"
-	SystemdStart        HookActionSystemdUnitOperations = "Start"
-	SystemdStop         HookActionSystemdUnitOperations = "Stop"
 )
 
 // Defines values for MatchExpressionOperator.
@@ -361,21 +349,21 @@ type DeviceConsole struct {
 
 // DeviceHooksSpec defines model for DeviceHooksSpec.
 type DeviceHooksSpec struct {
-	// AfterRebooting Hooks executed after rebooting enable custom actions and integration with other systems
+	// AfterRebooting Actions executed after rebooting enable custom actions and integration with other systems
 	// or services. These actions occur after the device has rebooted, allowing for post-reboot tasks.
-	AfterRebooting *[]DeviceRebootHookSpec `json:"afterRebooting,omitempty"`
+	AfterRebooting *[]HookAction `json:"afterRebooting,omitempty"`
 
-	// AfterUpdating Hooks executed after updating enable custom actions and integration with other systems
+	// AfterUpdating Actions executed after updating enable custom actions and integration with other systems
 	// or services. These actions occur after configuration changes have been applied to the device.
-	AfterUpdating *[]DeviceUpdateHookSpec `json:"afterUpdating,omitempty"`
+	AfterUpdating *[]HookAction `json:"afterUpdating,omitempty"`
 
-	// BeforeRebooting Hooks executed before rebooting allow for custom actions and integration with other systems
+	// BeforeRebooting Actions executed before rebooting allow for custom actions and integration with other systems
 	// or services. These actions occur before the device is rebooted.
-	BeforeRebooting *[]DeviceRebootHookSpec `json:"beforeRebooting,omitempty"`
+	BeforeRebooting *[]HookAction `json:"beforeRebooting,omitempty"`
 
-	// BeforeUpdating Hooks executed before updating allow for custom actions and integration with other systems
+	// BeforeUpdating Actions executed before updating allow for custom actions and integration with other systems
 	// or services. These actions occur before configuration changes are applied to the device.
-	BeforeUpdating *[]DeviceUpdateHookSpec `json:"beforeUpdating,omitempty"`
+	BeforeUpdating *[]HookAction `json:"beforeUpdating,omitempty"`
 }
 
 // DeviceIntegrityStatus defines model for DeviceIntegrityStatus.
@@ -424,14 +412,6 @@ type DeviceOSStatus struct {
 
 	// ImageDigest The digest of the OS image (e.g. sha256:a0...)
 	ImageDigest string `json:"imageDigest"`
-}
-
-// DeviceRebootHookSpec defines model for DeviceRebootHookSpec.
-type DeviceRebootHookSpec struct {
-	// Actions The actions taken before and after system reboots are observed. Each action is executed in the order they are defined.
-	Actions     []HookAction `json:"actions"`
-	Description *string      `json:"description,omitempty"`
-	Name        *string      `json:"name,omitempty"`
 }
 
 // DeviceResourceStatus defines model for DeviceResourceStatus.
@@ -501,18 +481,6 @@ type DeviceSystemInfo struct {
 
 	// OperatingSystem The Operating System reported by the device.
 	OperatingSystem string `json:"operatingSystem"`
-}
-
-// DeviceUpdateHookSpec defines model for DeviceUpdateHookSpec.
-type DeviceUpdateHookSpec struct {
-	// Actions The actions to take when the specified file operations are observed. Each action is executed in the order they are defined.
-	Actions     []HookAction     `json:"actions"`
-	Description *string          `json:"description,omitempty"`
-	Name        *string          `json:"name,omitempty"`
-	OnFile      *[]FileOperation `json:"onFile,omitempty"`
-
-	// Path The path to monitor for changes in configuration files. This path can point to either a specific file or an entire directory.
-	Path *string `json:"path,omitempty"`
 }
 
 // DeviceUpdatedStatus defines model for DeviceUpdatedStatus.
@@ -794,23 +762,27 @@ type GitConfigProviderSpec struct {
 
 // HookAction defines model for HookAction.
 type HookAction struct {
+	If *HookAction_If `json:"if,omitempty"`
+
+	// Timeout The maximum duration allowed for the action to complete.
+	// The duration should be specified as a positive integer
+	// followed by a time unit. Supported time units are:
+	// - 's' for seconds
+	// - 'm' for minutes
+	// - 'h' for hours
+	Timeout *string `json:"timeout,omitempty"`
+	union   json.RawMessage
+}
+
+// HookAction_If defines model for HookAction.If.
+type HookAction_If struct {
 	union json.RawMessage
 }
 
-// HookAction0 defines model for .
-type HookAction0 struct {
-	Executable HookActionExecutableSpec `json:"executable"`
-}
-
-// HookAction1 defines model for .
-type HookAction1 struct {
-	Systemd HookActionSystemdSpec `json:"systemd"`
-}
-
-// HookActionExecutable defines model for HookActionExecutable.
-type HookActionExecutable struct {
-	// EnvVars An optional list of KEY=VALUE pairs to set as environment variables for the executable.
-	EnvVars *[]string `json:"envVars,omitempty"`
+// HookActionRun defines model for HookActionRun.
+type HookActionRun struct {
+	// EnvVars Environment variable key-value pairs, injected during runtime
+	EnvVars *map[string]string `json:"envVars,omitempty"`
 
 	// Run The command to be executed, including any arguments using standard shell syntax. This field supports multiple commands piped together, as if they were executed under a bash -c context.
 	Run string `json:"run"`
@@ -819,66 +791,13 @@ type HookActionExecutable struct {
 	WorkDir *string `json:"workDir,omitempty"`
 }
 
-// HookActionExecutableSpec defines model for HookActionExecutableSpec.
-type HookActionExecutableSpec struct {
-	// EnvVars An optional list of KEY=VALUE pairs to set as environment variables for the executable.
-	EnvVars *[]string `json:"envVars,omitempty"`
+// HookConditionFileOp defines model for HookConditionFileOp.
+type HookConditionFileOp struct {
+	Op []FileOperation `json:"op"`
 
-	// Run The command to be executed, including any arguments using standard shell syntax. This field supports multiple commands piped together, as if they were executed under a bash -c context.
-	Run string `json:"run"`
-
-	// Timeout The maximum duration allowed for the action to complete.
-	// The duration should be specified as a positive integer
-	// followed by a time unit. Supported time units are:
-	// - 's' for seconds
-	// - 'm' for minutes
-	// - 'h' for hours
-	// - 'd' for days
-	Timeout *string `json:"timeout,omitempty"`
-
-	// WorkDir The directory in which the executable will be run from if it is left empty it will run from the users home directory.
-	WorkDir *string `json:"workDir,omitempty"`
+	// Path The path to monitor for changes in configuration files. This path can point to either a specific file or an entire directory.
+	Path string `json:"path"`
 }
-
-// HookActionSpec defines model for HookActionSpec.
-type HookActionSpec struct {
-	// Timeout The maximum duration allowed for the action to complete.
-	// The duration should be specified as a positive integer
-	// followed by a time unit. Supported time units are:
-	// - 's' for seconds
-	// - 'm' for minutes
-	// - 'h' for hours
-	// - 'd' for days
-	Timeout *string `json:"timeout,omitempty"`
-}
-
-// HookActionSystemdSpec defines model for HookActionSystemdSpec.
-type HookActionSystemdSpec struct {
-	// Timeout The maximum duration allowed for the action to complete.
-	// The duration should be specified as a positive integer
-	// followed by a time unit. Supported time units are:
-	// - 's' for seconds
-	// - 'm' for minutes
-	// - 'h' for hours
-	// - 'd' for days
-	Timeout *string               `json:"timeout,omitempty"`
-	Unit    HookActionSystemdUnit `json:"unit"`
-}
-
-// HookActionSystemdUnit defines model for HookActionSystemdUnit.
-type HookActionSystemdUnit struct {
-	// Name The name of the systemd unit on which the specified operations will be performed. This should be the exact name of the unit file, such as example.service. If the name is not populated the name will be auto discovered from the file path.
-	Name string `json:"name"`
-
-	// Operations The specific systemd operations to perform on the specified unit.
-	Operations []HookActionSystemdUnitOperations `json:"operations"`
-
-	// WorkDir The directory in which the executable will be run from if it is left empty it will run from the users home directory.
-	WorkDir *string `json:"workDir,omitempty"`
-}
-
-// HookActionSystemdUnitOperations defines model for HookActionSystemdUnit.Operations.
-type HookActionSystemdUnitOperations string
 
 // HttpConfig defines model for HttpConfig.
 type HttpConfig struct {
@@ -1812,48 +1731,22 @@ func (t *ConfigProviderSpec) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// AsHookAction0 returns the union data inside the HookAction as a HookAction0
-func (t HookAction) AsHookAction0() (HookAction0, error) {
-	var body HookAction0
+// AsHookActionRun returns the union data inside the HookAction as a HookActionRun
+func (t HookAction) AsHookActionRun() (HookActionRun, error) {
+	var body HookActionRun
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromHookAction0 overwrites any union data inside the HookAction as the provided HookAction0
-func (t *HookAction) FromHookAction0(v HookAction0) error {
+// FromHookActionRun overwrites any union data inside the HookAction as the provided HookActionRun
+func (t *HookAction) FromHookActionRun(v HookActionRun) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeHookAction0 performs a merge with any union data inside the HookAction, using the provided HookAction0
-func (t *HookAction) MergeHookAction0(v HookAction0) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsHookAction1 returns the union data inside the HookAction as a HookAction1
-func (t HookAction) AsHookAction1() (HookAction1, error) {
-	var body HookAction1
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromHookAction1 overwrites any union data inside the HookAction as the provided HookAction1
-func (t *HookAction) FromHookAction1(v HookAction1) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeHookAction1 performs a merge with any union data inside the HookAction, using the provided HookAction1
-func (t *HookAction) MergeHookAction1(v HookAction1) error {
+// MergeHookActionRun performs a merge with any union data inside the HookAction, using the provided HookActionRun
+func (t *HookAction) MergeHookActionRun(v HookActionRun) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1866,10 +1759,94 @@ func (t *HookAction) MergeHookAction1(v HookAction1) error {
 
 func (t HookAction) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.If != nil {
+		object["if"], err = json.Marshal(t.If)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'if': %w", err)
+		}
+	}
+
+	if t.Timeout != nil {
+		object["timeout"], err = json.Marshal(t.Timeout)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'timeout': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
 	return b, err
 }
 
 func (t *HookAction) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["if"]; found {
+		err = json.Unmarshal(raw, &t.If)
+		if err != nil {
+			return fmt.Errorf("error reading 'if': %w", err)
+		}
+	}
+
+	if raw, found := object["timeout"]; found {
+		err = json.Unmarshal(raw, &t.Timeout)
+		if err != nil {
+			return fmt.Errorf("error reading 'timeout': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsHookConditionFileOp returns the union data inside the HookAction_If as a HookConditionFileOp
+func (t HookAction_If) AsHookConditionFileOp() (HookConditionFileOp, error) {
+	var body HookConditionFileOp
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromHookConditionFileOp overwrites any union data inside the HookAction_If as the provided HookConditionFileOp
+func (t *HookAction_If) FromHookConditionFileOp(v HookConditionFileOp) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeHookConditionFileOp performs a merge with any union data inside the HookAction_If, using the provided HookConditionFileOp
+func (t *HookAction_If) MergeHookConditionFileOp(v HookConditionFileOp) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t HookAction_If) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *HookAction_If) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

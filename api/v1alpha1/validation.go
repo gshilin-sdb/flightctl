@@ -33,6 +33,9 @@ func (r Device) Validate() []error {
 		if r.Spec.Applications != nil {
 			allErrs = append(allErrs, validateApplications(*r.Spec.Applications)...)
 		}
+		if r.Spec.Hooks != nil {
+			allErrs = append(allErrs, r.Spec.Hooks.Validate()...)
+		}
 		if r.Spec.Resources != nil {
 			for _, resource := range *r.Spec.Resources {
 				allErrs = append(allErrs, resource.Validate()...)
@@ -90,6 +93,93 @@ func (c ConfigProviderSpec) Validate() []error {
 	default:
 		// if we hit this case, it means that the type should be added to the switch statement above
 		allErrs = append(allErrs, fmt.Errorf("unknown config provider type: %s", t))
+	}
+
+	return allErrs
+}
+
+func (h DeviceHooksSpec) Validate() []error {
+	allErrs := []error{}
+	if h.AfterRebooting != nil {
+		hookType := "afterRebooting"
+		for i, action := range *h.AfterRebooting {
+			path := fmt.Sprintf("spec.hooks.%s[%d]", hookType, i)
+			allErrs = append(allErrs, action.Validate(hookType, path)...)
+		}
+	}
+	if h.AfterUpdating != nil {
+		hookType := "afterUpdating"
+		for i, action := range *h.AfterUpdating {
+			path := fmt.Sprintf("spec.hooks.%s[%d]", hookType, i)
+			allErrs = append(allErrs, action.Validate(hookType, path)...)
+		}
+	}
+	if h.BeforeRebooting != nil {
+		hookType := "beforeRebooting"
+		for i, action := range *h.BeforeUpdating {
+			path := fmt.Sprintf("spec.hooks.%s[%d]", hookType, i)
+			allErrs = append(allErrs, action.Validate(hookType, path)...)
+		}
+	}
+	if h.BeforeUpdating != nil {
+		hookType := "beforeUpdating"
+		for i, action := range *h.BeforeUpdating {
+			path := fmt.Sprintf("spec.hooks.%s[%d]", hookType, i)
+			allErrs = append(allErrs, action.Validate(hookType, path)...)
+		}
+	}
+	return allErrs
+}
+
+func (a HookAction) Validate(hookType string, path string) []error {
+	allErrs := []error{}
+
+	t, err := a.Type()
+	if err != nil {
+		allErrs = append(allErrs, err)
+		return allErrs
+	}
+
+	switch t {
+	case RunActionType:
+		runAction, err := a.AsHookActionRun()
+		if err != nil {
+			allErrs = append(allErrs, err)
+			return allErrs
+		}
+		allErrs = append(allErrs, validation.ValidateString(&runAction.Run, path+".run", 1, 2048, nil, "")...)
+		// TODO: pull the extra validation done by the agent up here
+		allErrs = append(allErrs, validation.ValidateStringMap(runAction.EnvVars, path+".envVars", 1, 256, nil, "")...)
+		// TODO: validate path is clean and absolute
+		allErrs = append(allErrs, validation.ValidateString(runAction.WorkDir, path+".workDir", 1, 256, nil, "")...)
+	default:
+		// if we hit this case, it means that the type should be added to the switch statement above
+		allErrs = append(allErrs, fmt.Errorf("%s: unknown hook action type: %s", path, t))
+	}
+
+	if a.If != nil {
+		if hookType != "afterUpdating" {
+			allErrs = append(allErrs, fmt.Errorf("%s: %s hook does not support conditions", path, hookType))
+		}
+
+		t, err := a.If.Type()
+		if err != nil {
+			allErrs = append(allErrs, err)
+			return allErrs
+		}
+
+		switch t {
+		case FileOpConditionType:
+			fileOpCondition, err := a.If.AsHookConditionFileOp()
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
+			// TODO: validate path is clean and absolute
+			allErrs = append(allErrs, validation.ValidateString(&fileOpCondition.Path, path+".if.path", 1, 2048, nil, "")...)
+		default:
+			// if we hit this case, it means that the type should be added to the switch statement above
+			allErrs = append(allErrs, fmt.Errorf("%s: unknown hook action type: %s", path+".if", t))
+		}
 	}
 
 	return allErrs
@@ -273,6 +363,10 @@ func (r Fleet) Validate() []error {
 
 	if r.Spec.Template.Spec.Applications != nil {
 		allErrs = append(allErrs, validateApplications(*r.Spec.Template.Spec.Applications)...)
+	}
+
+	if r.Spec.Template.Spec.Hooks != nil {
+		allErrs = append(allErrs, r.Spec.Template.Spec.Hooks.Validate()...)
 	}
 
 	if r.Spec.Template.Spec.Resources != nil {
