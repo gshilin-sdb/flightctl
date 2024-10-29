@@ -13,9 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
+	types "github.com/coreos/ignition/v2/config/v3_4/types"
 	v1alpha1 "github.com/flightctl/flightctl/api/v1alpha1"
-	executer "github.com/flightctl/flightctl/pkg/executer"
-	log "github.com/flightctl/flightctl/pkg/log"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,20 +41,6 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockManager) Close() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockManagerMockRecorder) Close() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockManager)(nil).Close))
-}
-
 // Errors mocks base method.
 func (m *MockManager) Errors() []error {
 	m.ctrl.T.Helper()
@@ -70,112 +55,96 @@ func (mr *MockManagerMockRecorder) Errors() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Errors", reflect.TypeOf((*MockManager)(nil).Errors))
 }
 
-// OnAfterCreate mocks base method.
-func (m *MockManager) OnAfterCreate(ctx context.Context, path string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnAfterCreate", ctx, path)
-}
-
-// OnAfterCreate indicates an expected call of OnAfterCreate.
-func (mr *MockManagerMockRecorder) OnAfterCreate(ctx, path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterCreate", reflect.TypeOf((*MockManager)(nil).OnAfterCreate), ctx, path)
-}
-
 // OnAfterReboot mocks base method.
-func (m *MockManager) OnAfterReboot(ctx context.Context, path string) {
+func (m *MockManager) OnAfterReboot(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnAfterReboot", ctx, path)
+	ret := m.ctrl.Call(m, "OnAfterReboot", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // OnAfterReboot indicates an expected call of OnAfterReboot.
-func (mr *MockManagerMockRecorder) OnAfterReboot(ctx, path any) *gomock.Call {
+func (mr *MockManagerMockRecorder) OnAfterReboot(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterReboot", reflect.TypeOf((*MockManager)(nil).OnAfterReboot), ctx, path)
-}
-
-// OnAfterRemove mocks base method.
-func (m *MockManager) OnAfterRemove(ctx context.Context, path string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnAfterRemove", ctx, path)
-}
-
-// OnAfterRemove indicates an expected call of OnAfterRemove.
-func (mr *MockManagerMockRecorder) OnAfterRemove(ctx, path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterRemove", reflect.TypeOf((*MockManager)(nil).OnAfterRemove), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterReboot", reflect.TypeOf((*MockManager)(nil).OnAfterReboot), ctx)
 }
 
 // OnAfterUpdate mocks base method.
-func (m *MockManager) OnAfterUpdate(ctx context.Context, path string) {
+func (m *MockManager) OnAfterUpdate(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnAfterUpdate", ctx, path)
+	ret := m.ctrl.Call(m, "OnAfterUpdate", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // OnAfterUpdate indicates an expected call of OnAfterUpdate.
-func (mr *MockManagerMockRecorder) OnAfterUpdate(ctx, path any) *gomock.Call {
+func (mr *MockManagerMockRecorder) OnAfterUpdate(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterUpdate", reflect.TypeOf((*MockManager)(nil).OnAfterUpdate), ctx, path)
-}
-
-// OnBeforeCreate mocks base method.
-func (m *MockManager) OnBeforeCreate(ctx context.Context, path string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnBeforeCreate", ctx, path)
-}
-
-// OnBeforeCreate indicates an expected call of OnBeforeCreate.
-func (mr *MockManagerMockRecorder) OnBeforeCreate(ctx, path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeCreate", reflect.TypeOf((*MockManager)(nil).OnBeforeCreate), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnAfterUpdate", reflect.TypeOf((*MockManager)(nil).OnAfterUpdate), ctx)
 }
 
 // OnBeforeReboot mocks base method.
-func (m *MockManager) OnBeforeReboot(ctx context.Context, path string) {
+func (m *MockManager) OnBeforeReboot(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnBeforeReboot", ctx, path)
+	ret := m.ctrl.Call(m, "OnBeforeReboot", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // OnBeforeReboot indicates an expected call of OnBeforeReboot.
-func (mr *MockManagerMockRecorder) OnBeforeReboot(ctx, path any) *gomock.Call {
+func (mr *MockManagerMockRecorder) OnBeforeReboot(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeReboot", reflect.TypeOf((*MockManager)(nil).OnBeforeReboot), ctx, path)
-}
-
-// OnBeforeRemove mocks base method.
-func (m *MockManager) OnBeforeRemove(ctx context.Context, path string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnBeforeRemove", ctx, path)
-}
-
-// OnBeforeRemove indicates an expected call of OnBeforeRemove.
-func (mr *MockManagerMockRecorder) OnBeforeRemove(ctx, path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeRemove", reflect.TypeOf((*MockManager)(nil).OnBeforeRemove), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeReboot", reflect.TypeOf((*MockManager)(nil).OnBeforeReboot), ctx)
 }
 
 // OnBeforeUpdate mocks base method.
-func (m *MockManager) OnBeforeUpdate(ctx context.Context, path string) {
+func (m *MockManager) OnBeforeUpdate(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnBeforeUpdate", ctx, path)
+	ret := m.ctrl.Call(m, "OnBeforeUpdate", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // OnBeforeUpdate indicates an expected call of OnBeforeUpdate.
-func (mr *MockManagerMockRecorder) OnBeforeUpdate(ctx, path any) *gomock.Call {
+func (mr *MockManagerMockRecorder) OnBeforeUpdate(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeUpdate", reflect.TypeOf((*MockManager)(nil).OnBeforeUpdate), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnBeforeUpdate", reflect.TypeOf((*MockManager)(nil).OnBeforeUpdate), ctx)
 }
 
-// Run mocks base method.
-func (m *MockManager) Run(ctx context.Context) {
+// OnPathCreated mocks base method.
+func (m *MockManager) OnPathCreated(path string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Run", ctx)
+	m.ctrl.Call(m, "OnPathCreated", path)
 }
 
-// Run indicates an expected call of Run.
-func (mr *MockManagerMockRecorder) Run(ctx any) *gomock.Call {
+// OnPathCreated indicates an expected call of OnPathCreated.
+func (mr *MockManagerMockRecorder) OnPathCreated(path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockManager)(nil).Run), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnPathCreated", reflect.TypeOf((*MockManager)(nil).OnPathCreated), path)
+}
+
+// OnPathRemoved mocks base method.
+func (m *MockManager) OnPathRemoved(path string, content types.File) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnPathRemoved", path, content)
+}
+
+// OnPathRemoved indicates an expected call of OnPathRemoved.
+func (mr *MockManagerMockRecorder) OnPathRemoved(path, content any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnPathRemoved", reflect.TypeOf((*MockManager)(nil).OnPathRemoved), path, content)
+}
+
+// OnPathUpdated mocks base method.
+func (m *MockManager) OnPathUpdated(path string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnPathUpdated", path)
+}
+
+// OnPathUpdated indicates an expected call of OnPathUpdated.
+func (mr *MockManagerMockRecorder) OnPathUpdated(path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnPathUpdated", reflect.TypeOf((*MockManager)(nil).OnPathUpdated), path)
 }
 
 // Sync mocks base method.
@@ -190,79 +159,4 @@ func (m *MockManager) Sync(current, desired *v1alpha1.RenderedDeviceSpec) error 
 func (mr *MockManagerMockRecorder) Sync(current, desired any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sync", reflect.TypeOf((*MockManager)(nil).Sync), current, desired)
-}
-
-// MockActionHookFactory is a mock of ActionHookFactory interface.
-type MockActionHookFactory struct {
-	ctrl     *gomock.Controller
-	recorder *MockActionHookFactoryMockRecorder
-}
-
-// MockActionHookFactoryMockRecorder is the mock recorder for MockActionHookFactory.
-type MockActionHookFactoryMockRecorder struct {
-	mock *MockActionHookFactory
-}
-
-// NewMockActionHookFactory creates a new mock instance.
-func NewMockActionHookFactory(ctrl *gomock.Controller) *MockActionHookFactory {
-	mock := &MockActionHookFactory{ctrl: ctrl}
-	mock.recorder = &MockActionHookFactoryMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockActionHookFactory) EXPECT() *MockActionHookFactoryMockRecorder {
-	return m.recorder
-}
-
-// Create mocks base method.
-func (m *MockActionHookFactory) Create(exec executer.Executer, log *log.PrefixLogger) (ActionHook, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", exec, log)
-	ret0, _ := ret[0].(ActionHook)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockActionHookFactoryMockRecorder) Create(exec, log any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockActionHookFactory)(nil).Create), exec, log)
-}
-
-// MockActionHook is a mock of ActionHook interface.
-type MockActionHook struct {
-	ctrl     *gomock.Controller
-	recorder *MockActionHookMockRecorder
-}
-
-// MockActionHookMockRecorder is the mock recorder for MockActionHook.
-type MockActionHookMockRecorder struct {
-	mock *MockActionHook
-}
-
-// NewMockActionHook creates a new mock instance.
-func NewMockActionHook(ctrl *gomock.Controller) *MockActionHook {
-	mock := &MockActionHook{ctrl: ctrl}
-	mock.recorder = &MockActionHookMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockActionHook) EXPECT() *MockActionHookMockRecorder {
-	return m.recorder
-}
-
-// OnChange mocks base method.
-func (m *MockActionHook) OnChange(ctx context.Context, path string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OnChange", ctx, path)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// OnChange indicates an expected call of OnChange.
-func (mr *MockActionHookMockRecorder) OnChange(ctx, path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnChange", reflect.TypeOf((*MockActionHook)(nil).OnChange), ctx, path)
 }

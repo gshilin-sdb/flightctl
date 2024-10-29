@@ -97,11 +97,13 @@ func TestSync(t *testing.T) {
 			)
 
 			for _, f := range tt.createdFiles {
-				expectCreateFile(ctx, mockWriter, mockManagedFile, mockHookManager, f)
+				expectCreateFile(mockWriter, mockManagedFile, mockHookManager, f)
 			}
 
 			for _, f := range tt.removedFiles {
-				expectRemoveFile(ctx, mockWriter, mockHookManager, f)
+				currentIgnition, err := ParseAndConvertConfigFromStr(util.FromPtr(tt.current.Config))
+				require.NoError(err)
+				expectRemoveFile(mockWriter, mockHookManager, currentIgnition.Storage.Files, f)
 			}
 
 			err := controller.Sync(ctx, tt.current, tt.desired)
@@ -172,18 +174,17 @@ func TestComputeRemoval(t *testing.T) {
 	}
 }
 
-func expectCreateFile(ctx context.Context, mockWriter *fileio.MockWriter, mockManagedFile *fileio.MockManagedFile, mockHookManager *hook.MockManager, f string) {
+func expectCreateFile(mockWriter *fileio.MockWriter, mockManagedFile *fileio.MockManagedFile, mockHookManager *hook.MockManager, f string) {
 	mockWriter.EXPECT().CreateManagedFile(gomock.Any()).Return(mockManagedFile, nil)
 	mockManagedFile.EXPECT().IsUpToDate().Return(false, nil)
 	mockManagedFile.EXPECT().Exists().Return(false, nil)
 	mockManagedFile.EXPECT().Write().Return(nil)
-	mockHookManager.EXPECT().OnBeforeCreate(ctx, f)
-	mockHookManager.EXPECT().OnAfterCreate(ctx, f)
+	mockHookManager.EXPECT().OnPathCreated(f)
 }
 
-func expectRemoveFile(ctx context.Context, mockWriter *fileio.MockWriter, mockHookManager *hook.MockManager, f string) {
-	mockHookManager.EXPECT().OnBeforeRemove(ctx, f)
-	mockHookManager.EXPECT().OnAfterRemove(ctx, f)
+func expectRemoveFile(mockWriter *fileio.MockWriter, mockHookManager *hook.MockManager, current []ignv3types.File, f string) {
+	content := getIgnitionFile(current, f)
+	mockHookManager.EXPECT().OnPathRemoved(f, content)
 	mockWriter.EXPECT().RemoveFile(f).Return(nil)
 }
 

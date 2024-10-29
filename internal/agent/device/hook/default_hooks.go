@@ -1,53 +1,51 @@
 package hook
 
 import (
+	"encoding/json"
+
 	"github.com/flightctl/flightctl/api/v1alpha1"
+	"github.com/flightctl/flightctl/internal/util"
 )
 
-func marshalExecutable(run string, envVars *[]string, workDir string, timeout string) v1alpha1.HookAction {
-	cha := v1alpha1.HookAction0{
-		Executable: v1alpha1.HookActionExecutableSpec{
-			EnvVars: envVars,
-			Run:     run,
-			WorkDir: &workDir,
-			Timeout: &timeout,
-		},
-	}
-	var ret v1alpha1.HookAction
-	_ = ret.FromHookAction0(cha)
-	return ret
-}
-
-func executableActionFactory(run string, envVars *[]string, workDir string, timeout string) ActionHookFactory {
-	return newApiHookActionFactory(marshalExecutable(run, envVars, workDir, timeout))
-}
-
-func defaultAfterUpdateHooks() []HookDefinition {
-	return []HookDefinition{
+const (
+	defaultBeforeUpdateActionsJSON = `[]`
+	defaultAfterUpdateActionsJSON  = `[
 		{
-			name:        "microshift manifest up",
-			path:        "/var/usr/klusterlet-manifests",
-			description: "Apply the provided microshift manifest",
-			ops:         []v1alpha1.FileOperation{v1alpha1.FileOperationCreate, v1alpha1.FileOperationUpdate},
-			actionHooks: []ActionHookFactory{
-				executableActionFactory("kubectl apply -f {{ .FilePath }}", &[]string{"KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig"},
-					"/var/usr/klusterlet-manifests", "1m"),
+			"if": {
+				"path": "/etc/systemd/system/",
+				"op": ["Create", "Update", "Remove"]
 			},
+			"run": "systemctl daemon-reload"
 		},
-	}
-}
-
-func defaultBeforeUpdateHooks() []HookDefinition {
-	return []HookDefinition{
 		{
-			name:        "microshift manifest down",
-			path:        "/var/usr/klusterlet-manifests",
-			description: "Delete the provided microshift manifest",
-			ops:         []v1alpha1.FileOperation{v1alpha1.FileOperationRemove},
-			actionHooks: []ActionHookFactory{
-				executableActionFactory("kubectl delete -f {{ .FileName }}", &[]string{"KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig"},
-					"/var/usr/klusterlet-manifests", "1m"),
+			"if": {
+				"path": "/etc/NetworkManager/system-connections/",
+				"op": ["Create", "Update", "Remove"]
 			},
+			"run": "nmcli conn reload"
 		},
-	}
+		{
+			"if": {
+				"path": "/etc/firewalld/",
+				"op": ["Create", "Update", "Remove"]
+			},
+			"run": "firewall-cmd --reload"
+		}
+	]`
+	defaultBeforeRebootActionsJSON = `[]`
+	defaultAfterRebootActionsJSON  = `[]`
+)
+
+var (
+	defaultBeforeUpdateActions = []v1alpha1.HookAction{}
+	defaultAfterUpdateActions  = []v1alpha1.HookAction{}
+	defaultBeforeRebootActions = []v1alpha1.HookAction{}
+	defaultAfterRebootActions  = []v1alpha1.HookAction{}
+)
+
+func init() {
+	util.Must(json.Unmarshal([]byte(defaultBeforeUpdateActionsJSON), &defaultBeforeUpdateActions))
+	util.Must(json.Unmarshal([]byte(defaultAfterUpdateActionsJSON), &defaultAfterUpdateActions))
+	util.Must(json.Unmarshal([]byte(defaultBeforeRebootActionsJSON), &defaultBeforeRebootActions))
+	util.Must(json.Unmarshal([]byte(defaultAfterRebootActionsJSON), &defaultAfterRebootActions))
 }

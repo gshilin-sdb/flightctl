@@ -238,7 +238,6 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.log,
 	)
 
-	go hookManager.Run(ctx)
 	go resourceManager.Run(ctx)
 
 	return agent.Run(ctx)

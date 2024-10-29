@@ -100,7 +100,7 @@ func (c *Controller) ensureConfigData(ctx context.Context, currentData, desiredD
 		return nil
 	}
 
-	// write ignition files to disk and trigger pre hooks
+	// write ignition files to disk
 	c.log.Debug("Writing ignition files")
 	err = c.writeIgnitionFiles(ctx, desiredIgnition.Storage.Files)
 	if err != nil {
@@ -114,15 +114,23 @@ func (c *Controller) ensureConfigData(ctx context.Context, currentData, desiredD
 func (c *Controller) removeObsoleteFiles(ctx context.Context, currentFiles, desiredFiles []ignv3types.File) error {
 	removeFiles := computeRemoval(currentFiles, desiredFiles)
 	for _, file := range removeFiles {
-		c.log.Infof("Deleting file: %s", file)
-		// trigger delete pre hook and wait for it to complete
-		c.hookManager.OnBeforeRemove(ctx, file)
+		c.log.Debugf("Deleting file: %s", file)
+		backup := getIgnitionFile(currentFiles, file)
 		if err := c.deviceWriter.RemoveFile(file); err != nil {
 			return fmt.Errorf("deleting files failed: %w", err)
 		}
-		c.hookManager.OnAfterRemove(ctx, file)
+		c.hookManager.OnPathRemoved(file, backup)
 	}
 	return nil
+}
+
+func getIgnitionFile(currentFiles []ignv3types.File, file string) ignv3types.File {
+	for _, f := range currentFiles {
+		if f.Path == file {
+			return f
+		}
+	}
+	return ignv3types.File{}
 }
 
 func (c *Controller) writeIgnitionFiles(ctx context.Context, files []ignv3types.File) error {
@@ -142,11 +150,6 @@ func (c *Controller) writeIgnitionFiles(ctx context.Context, files []ignv3types.
 		if err != nil {
 			return err
 		}
-		if !exists {
-			c.hookManager.OnBeforeCreate(ctx, file.Path)
-		} else {
-			c.hookManager.OnBeforeUpdate(ctx, file.Path)
-		}
 		if err := managedFile.Write(); err != nil {
 			c.log.Warnf("Failed to write file %s: %v", file.Path, err)
 			// in order to create clearer error in status in case we fail in temp file creation
@@ -158,9 +161,9 @@ func (c *Controller) writeIgnitionFiles(ctx context.Context, files []ignv3types.
 			return err
 		}
 		if !exists {
-			c.hookManager.OnAfterCreate(ctx, file.Path)
+			c.hookManager.OnPathCreated(file.Path)
 		} else {
-			c.hookManager.OnAfterUpdate(ctx, file.Path)
+			c.hookManager.OnPathUpdated(file.Path)
 		}
 	}
 	return nil

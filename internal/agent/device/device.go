@@ -251,6 +251,10 @@ func (a *Agent) beforeUpdate(ctx context.Context, current, desired *v1alpha1.Ren
 		return fmt.Errorf("applications: %w", err)
 	}
 
+	if err := a.hookManager.OnBeforeUpdate(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -339,6 +343,10 @@ func (a *Agent) syncDevice(ctx context.Context, current, desired *v1alpha1.Rende
 func (a *Agent) afterUpdate(ctx context.Context) error {
 	a.log.Debug("Executing post actions")
 	defer a.log.Debug("Finished executing post actions")
+
+	if err := a.hookManager.OnAfterUpdate(ctx); err != nil {
+		return err
+	}
 
 	// execute post actions for applications
 	if err := a.appManager.ExecuteActions(ctx); err != nil {
