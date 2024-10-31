@@ -229,6 +229,8 @@ However, there are scenarios where this is impractical, for example, when config
 
 Conceptually, this set of configuration files can be thought of as an additional, dynamic layer on top of the OS image's layers. The Flight Control Agent applies updates to this layer transactionally, ensuring that either all files have been successfully updated in the file system or have been returned to their pre-update state. Further, if the user updates both a devices OS and configuration set at the same time, the Flight Control Agent will first update the OS, then apply the specified configuration set on top.
 
+> [!Important] In general, the Flight Control agent just writes configuration files to disk and expects the respective systemd services and applications to pick up the configuration change itself. As many services do not support this, you can add rules like "if after updating config file X has changed, run command Y" to the device specification. Refer to [Using Device Lifecycle Hooks](managing-devices.md#using-device-lifecycle-hooks) on how to do this and which rules Flight Control supports by default such as informing systemd when unit files have changed.
+
 Users can specify a list of configurations sets, in which case the Flight Control Agent applies the sets in sequence and on top of each other, such that in case of conflict the "last one wins".
 
 Configuration can come from multiple sources, called "configuration providers" in Flight Control. Flight Control currently supports the following configuration providers:
@@ -410,12 +412,12 @@ For each application in the "applications" section of the device's specification
 
 | Status Field | Description |
 | ------------ |-------------|
-| Preparing   | Application deployed; containers initialized but not yet running.
-| Starting    | Application started; at least one container running, awaiting results.
-| Running     | All containers are running.
-| Error       | All containers failed.
-| Unknown     | Application started, no containers observed.
-| Completed   | All containers have completed successfully.
+| Preparing   | Application deployed; containers initialized but not yet running. |
+| Starting    | Application started; at least one container running, awaiting results. |
+| Running     | All containers are running. |
+| Error       | All containers failed. |
+| Unknown     | Application started, no containers observed. |
+| Completed   | All containers have completed successfully. |
 
 ### Managing Applications on the Web UI
 
@@ -504,6 +506,82 @@ LABEL appType="compose"
 ```
 
 ## Using Device Lifecycle Hooks
+
+You can use device lifecycle hooks to make the agent run user-defined commands at specific points in the device's lifecycle. For example, you can add a shell script to your OS images that backs up your application data and then specify that this script shall be run and complete successfully before the agent can start updating the system.
+
+The following lifecycle hooks are supported:
+
+| Lifecycle Hook | Description |
+| -------------- | ----------- |
+| beforeUpdating | This hook is called when after the agent has prepared the update and before actually making changes to the system. If an action in this hook returns with failure, the agent aborts the update. |
+| afterUpdating | This hook is called after the agent has written the update to disk. If an action in this hook returns with failure,the agent will abort and roll back the update. |
+| beforeRebooting | This hook is called before the system reboots. The agent will block the reboot until running the action has completed. If any action in this hook returns with failure, the agent will abort and roll back the update. |
+| afterRebooting | This hook is called when the agent first starts after a reboot. If any action in this hook returns with failure, the agent will report this but continue starting up. |
+
+An action can be to run an external command ("run action"). When multiple actions are specified for a hook, these actions are performed in sequence, finishing one action before starting the next. If an action returns with failure, later actions will not be executed.
+
+A run action takes the following parameters:
+
+| Parameter | Description |
+| --------- | ----------- |
+| Run | The absolute path to the command to run, followed by any flags or arguments.<br/><br/>Example: `/usr/bin/nmcli connection reload`.<br/><br/>Note that the command is not executed in a shell, so you cannot use shell variables like `$PATH` or `$HOME` or chain commands (`\|` or `;`). However, it is possible to start a shell yourself if necessary by specifying the shell as command to run.<br/><br/>Example: `/usr/bin/bash -c 'echo $SHELL $HOME $USER'` |
+| EnvVars | (Optional) A list of key/value-pairs to set as environment variables for the command. |
+| WorkDir | (Optional) The directory the command will be run from. |
+| Timeout | (Optional) The maximum duration allowed for the action to complete. The duration must be be specified as a single positive integer followed by a time unit. Supported time units are `s` for seconds, `m` for minutes, and `h` for hours. |
+
+By default, actions are performed every time the hook is triggered. However, for the "afterUpdating" hook you can specify a condition that a specific file or directory path must have changed during the update ("path condition"). If the condition is not true, the agent will skip the conditional action.
+
+A path condition takes the following parameters:
+
+| Parameter | Description |
+| --------- | ----------- |
+| Path | An absolute path to a file or directory that must have changed during the update as condition for the action to be performed. Paths must be specified using forward slashes (`/`) and if the path is to a directory it must terminate with a forward slash `/`.<br/></br>If you specify a path to a file, the file must have changed to satisfy the condition.</br>If you specify a path to a directory, a file in that directory or any of its subdirectories must have changed to satisfy the condition.|
+| On | A list of operations (`Create`, `Update`, `Remove`) to further limit the kind of changes to the specified path as condition for the action to be performed. |
+
+If you have specified a "path condition" for an action in the afterUpdating hook, you have the following variables that you can include in arguments to your command and that will be replaced with the absolute path(s) to the changed files:
+
+| Variable | Description |
+| -------- | ----------- |
+| `{{ Path }}` | The absolute path to the file or directory specified in the path condition. |
+| `{{ Files }}` | A space-separated list of absolute paths of the files that were changed (created, updated, or removed) during the update and are covered by the path condition. |
+| `{{ CreatedFiles }}` | A space-separated list of absolute paths of the files that were changed (created, updated, or removed) during the update and are covered by the path condition. |
+| `{{ UpdatedFiles }}` | A space-separated list of absolute paths of the files that were updated during the update and are covered by the path condition. |
+| `{{ RemovedFiles }}` | A space-separated list of absolute paths of the files that were removed during the update and are covered by the path condition. |
+| `{{ BackupFiles }}` | A space-separated list of absolute paths to a transient backup of the removed files. At the point the afterUpdating hook is called the original files no longer exist in the original location. By keeping a copy just for the runtime of the hook in a backup location, commands that require the content of removed file but not its original location can be run. |
+
+### Using Device Lifecycle Hooks on the Web UI
+
+### Using Device Lifecycle Hooks on the CLI
+
+To add a device lifecycle hook, specify it in the device's `spec.hooks` as follows:
+
+```yaml
+apiVersion: v1alpha1
+kind: Device
+metadata:
+  name: some_device_name
+spec:
+[...]
+  hooks:
+    afterUpdating:
+    # a simple command with arguments (note: specify absolute path to binary)
+    - run: /usr/bin/echo "called from afterUpdating hook"
+    # a second command, this time running a shell and using environment
+    # variables, working directory, and timeout
+    - run: /usr/bin/bash -c "echo ${MESSAGE}"
+      envVars:
+        MESSAGE: "called from afterUpdating hook"
+      timeout: 10s
+      workDir: /
+    # a third command, this time with a path condition that runs the command
+    # only if a file below /etc/systemd/system/ has been changed and prints
+    # the paths of the changed files
+    - if:
+        path: "/etc/systemd/system/"
+        op: [Create, Update, Remove]
+      run: /usr/bin/echo "{{ Files }}"
+[...]
+```
 
 ## Monitoring Device Resources
 
