@@ -16,7 +16,7 @@ jobs:
         arch: [amd64, arm64]
     env:
       NAME: flightctl-${{ matrix.os }}-${{ matrix.arch }}
-    runs-on: ${{ matrix.os == 'darwin' && 'macos-latest' || 'ubuntu-24.04' }}
+    runs-on: 'ubuntu-24.04'
     steps:
       - name: Install Go (if macOS)
         if: ${{ matrix.os == 'darwin' }}
