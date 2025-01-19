@@ -2,12 +2,12 @@ package resource
 
 import (
 	"context"
-	"github.com/flightctl/flightctl/internal/agent/device/fileio"
 	"math"
 	"sync"
 	"time"
 
 	"github.com/flightctl/flightctl/api/v1alpha1"
+	"github.com/flightctl/flightctl/internal/agent/device/fileio"
 	"github.com/flightctl/flightctl/pkg/log"
 )
 

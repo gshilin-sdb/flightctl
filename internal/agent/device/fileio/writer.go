@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"k8s.io/klog/v2"
 	"os"
 	"os/user"
 	"path"
@@ -15,6 +14,7 @@ import (
 
 	ign3types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/vincent-petithory/dataurl"
+	"k8s.io/klog/v2"
 )
 
 // writer is responsible for writing files to the device

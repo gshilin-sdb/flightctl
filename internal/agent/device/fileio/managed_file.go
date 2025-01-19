@@ -3,10 +3,11 @@ package fileio
 import (
 	"bytes"
 	"fmt"
+	"os"
+
 	"github.com/ccoveille/go-safecast"
 	ign3types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/flightctl/flightctl/internal/agent/device/errors"
-	"os"
 )
 
 type managedFile struct {
