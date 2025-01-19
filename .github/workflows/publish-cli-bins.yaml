@@ -114,24 +114,17 @@ jobs:
     name: Verify Binaries
     strategy:
       matrix:
-        # "windows-arm64" is NOT natively supported by Github-hosted runners
-        os_arch: [ "linux-amd64", "linux-arm64", "darwin-amd64", "darwin-arm64", "windows-amd64" ]
+        # windows is NOT natively supported by Github-hosted runners
+        os_arch: [ "linux-amd64", "linux-arm64", "darwin-amd64", "darwin-arm64" ]
         include:
           - os_arch: "linux-amd64"
             runner: "ubuntu-latest"
-            ext: ""
           - os_arch: "linux-arm64"
             runner: "ubuntu-latest"
-            ext: ""
           - os_arch: "darwin-amd64"
             runner: "macos-latest"
-            ext: ""
           - os_arch: "darwin-arm64"
             runner: "macos-latest"
-            ext: ""
-          - os_arch: "windows-amd64"
-            runner: "macos-latest"
-            ext: ".exe"
     runs-on: ${{ matrix.runner }}
     needs: build
 
@@ -139,10 +132,10 @@ jobs:
       - name: Load binary
         uses: actions/download-artifact@v4
         with:
-          name: flightctl-${{ matrix.os_arch }}${{ matrix.ext }}
+          name: flightctl-${{ matrix.os_arch }}
 
       - name: Make Executable
-        run: chmod +x flightctl-${{ matrix.os_arch }}${{ matrix.ext }}
+        run: chmod +x flightctl-${{ matrix.os_arch }}
 
       - name: Setup QEMU
         run: |
@@ -155,10 +148,8 @@ jobs:
           # Verify version output
           if [[ "${{ matrix.os_arch }}" == "linux-arm64" ]]; then
             docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace ubuntu:latest /workspace/flightctl-${{ matrix.os_arch }} version
-          elif [[ "${{ matrix.os_arch }}" == "windows-amd64" ]]; then
-            docker run --rm --platform windows/amd64 -v ${{ github.workspace }}:/workspace windows:latest /workspace/flightctl-${{ matrix.os_arch }} version
           else
-            ./flightctl-${{ matrix.os_arch }}${{ matrix.ext }} version
+            ./flightctl-${{ matrix.os_arch }} version
           fi
           if [ $? -gt 0 ]; then
             echo "Error: Version command failed"
