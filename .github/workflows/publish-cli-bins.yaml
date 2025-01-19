@@ -155,7 +155,7 @@ jobs:
           # Verify version output
           if [[ "${{ matrix.os_arch }}" == "linux-arm64" ]]; then
             docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace ubuntu:latest /workspace/flightctl-${{ matrix.os_arch }} version
-          elif [[ "${{ matrix.os_arch }}" == "windows-arm64" ]]; then
+          elif [[ "${{ matrix.os_arch }}" == "windows-amd64" ]]; then
             docker run --rm --platform windows/arm64 -v ${{ github.workspace }}:/workspace windows:latest /workspace/flightctl-${{ matrix.os_arch }} version
           else
             ./flightctl-${{ matrix.os_arch }}${{ matrix.ext }} version
