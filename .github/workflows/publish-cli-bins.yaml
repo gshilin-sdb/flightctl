@@ -120,7 +120,7 @@ jobs:
         with:
           name: flightctl-windows-amd64.exe
       - name: Verify
-        run: flightctl-windows-amd64.exe version
+        run: .\flightctl-windows-amd64.exe version
 
   verify:
     name: Verify Binaries on linux/macos
