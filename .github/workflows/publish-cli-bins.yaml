@@ -114,16 +114,13 @@ jobs:
     name: Verify Binaries on windows
     runs-on: "windows-latest"
     needs: build
-    env:
-      # "windows-arm64" is NOT natively supported by Github-hosted runners
-      EXE: "flightctl-windows-amd64.exe"
     steps:
       - name: Load binary
         uses: actions/download-artifact@v4
         with:
-          name: $EXE
+          name: flightctl-windows-amd64.exe
       - name: Verify
-        run: $EXE version
+        run: flightctl-windows-amd64.exe version
 
   verify:
     name: Verify Binaries on linux/macos
